@@ -41,6 +41,8 @@ from mathutils import Matrix, Euler, Quaternion, Vector
 from . import sketchup
 from .SKPutil import *
 
+import bpy.utils.previews as previews
+
 bl_info = {
     "name": "SketchUp Importer",
     "author": "Martijn Berger, Sanjay Mehta, Arindam Mondal, Peter Kirkham",
@@ -1362,6 +1364,260 @@ class ImportSketchupWarehouseGLB(Operator):
         return {'CANCELLED'}
 
 
+# Global preview collection and result cache for 3D Warehouse browser
+_skp_wh_previews = None
+_skp_wh_results = []  # list of dicts: {model_id, model_name, model_url, icon_id}
+_skp_wh_last_query = ''  # track last query to reset offset when changed
+
+
+def _skp_wh_get_prefs():
+    addon_name = __name__.split('.')[0]
+    return bpy.context.preferences.addons[addon_name].preferences if addon_name in bpy.context.preferences.addons else None
+
+
+def _skp_wh_ensure_previews():
+    global _skp_wh_previews
+    if _skp_wh_previews is None:
+        _skp_wh_previews = previews.new()
+    return _skp_wh_previews
+
+
+def _skp_wh_clear_previews():
+    global _skp_wh_previews, _skp_wh_results
+    if _skp_wh_previews:
+        for name in list(_skp_wh_previews.keys()):
+            try:
+                _skp_wh_previews.remove(name)
+            except Exception:
+                pass
+    _skp_wh_results = []
+
+
+# Properties for search
+bpy.types.WindowManager.skp_wh_query = StringProperty(name="Search", default="chair")
+if not hasattr(bpy.types.WindowManager, 'skp_wh_offset'):
+    bpy.types.WindowManager.skp_wh_offset = IntProperty(name="Offset", default=0, min=0)
+
+
+class SKPWH_OT_Search(Operator):
+    bl_idname = 'skp_wh.search'
+    bl_label = 'Search 3D Warehouse'
+    bl_description = 'Search SketchUp 3D Warehouse and list results'
+    bl_options = {'INTERNAL'}
+
+    max_results: IntProperty(name='Max Results', default=24, min=1, max=96)
+    page_delta: IntProperty(name='Page Delta', default=0)  # -1 prev, +1 next
+
+    def _build_api_url(self, query: str, offset: int) -> str:
+        from urllib.parse import quote
+        base = ('https://embed-3dwarehouse.sketchup.com/warehouse/v1.0/entities'
+                '?sortBy=relevance%20desc&personalizeSearch=true&personalizeSearchAlgorithm=heuristic'
+                '&contentType=3dw&showBinaryAttributes=true&showBinaryMetadata=true&showAttributes=true'
+                '&show=all&recordEvent=false&fq=binaryNames%3Dexists%3Dtrue')
+        return f"{base}&q={quote(query)}&offset={offset}"
+
+    def _parse_entities(self, data):
+        # Now include 'entries' key from sample JSON
+        if isinstance(data, dict):
+            for k in ('entries', 'entities', 'items', 'results'):
+                v = data.get(k)
+                if isinstance(v, list) and v:
+                    return v
+        if isinstance(data, list):
+            return data
+        return []
+
+    def _slugify(self, name: str):
+        import re
+        slug = re.sub(r'[^a-zA-Z0-9\- _]+', '', (name or 'Model')).strip().replace(' ', '-')
+        return slug[:60] if slug else 'Model'
+
+    def _pick_thumbnail_binary(self, binaries: dict):
+        # prefer large webp/jpg then small then tiny; avoid *_ao unless nothing else
+        primary_order = ['bot_lt_wp', 'bot_lt', 'bot_st_wp', 'bot_st', 'bot_tt_wp', 'bot_tt']
+        ao_order = ['bot_lt_wp_ao', 'bot_lt_ao', 'bot_st_wp_ao', 'bot_st_ao', 'bot_tt_wp_ao', 'bot_tt_ao']
+        for key in primary_order + ao_order:
+            entry = binaries.get(key)
+            if isinstance(entry, dict):
+                url = entry.get('url') or entry.get('contentUrl')
+                if url:
+                    return url, entry.get('originalFileName', '')
+        # fallback any image-like ext
+        for k, entry in binaries.items():
+            if isinstance(entry, dict):
+                ext = (entry.get('ext') or '').lower()
+                if ext in ('jpg', 'jpeg', 'png', 'webp'):
+                    url = entry.get('url') or entry.get('contentUrl')
+                    if url:
+                        return url, entry.get('originalFileName', '')
+        return '', ''
+
+    def execute(self, context):
+        global _skp_wh_last_query
+        query = context.window_manager.skp_wh_query.strip()
+        if not query:
+            self.report({'WARNING'}, 'Empty query')
+            return {'CANCELLED'}
+        wm = context.window_manager
+        if query != _skp_wh_last_query:
+            wm.skp_wh_offset = 0
+            _skp_wh_last_query = query
+        if self.page_delta != 0:
+            wm.skp_wh_offset = max(0, wm.skp_wh_offset + (self.page_delta * self.max_results))
+        offset = wm.skp_wh_offset
+        prefs = _skp_wh_get_prefs()
+        cookie = prefs.warehouse_cookie.strip() if prefs and getattr(prefs, 'warehouse_cookie', '') else ''
+        import urllib.request, urllib.error, json, tempfile, os, shutil, re
+        api_url = self._build_api_url(query, offset)
+        skp_log(f"Warehouse API search URL: {api_url}")
+        headers = {
+            'User-Agent': 'Mozilla/5.0',
+            'Accept': 'application/json',
+            'Referer': 'https://3dwarehouse.sketchup.com/',
+        }
+        if cookie:
+            headers['Cookie'] = cookie
+        data = None
+        try:
+            with urllib.request.urlopen(urllib.request.Request(api_url, headers=headers), timeout=30) as resp:
+                raw = resp.read().decode('utf-8', errors='replace')
+            data = json.loads(raw)
+        except Exception as e:
+            self.report({'ERROR'}, f'API search failed: {e}')
+            return {'CANCELLED'}
+        entries = self._parse_entities(data)
+        if not entries:
+            _skp_wh_clear_previews()
+            self.report({'INFO'}, 'No models found')
+            return {'FINISHED'}
+        entries = entries[:self.max_results]
+        _skp_wh_clear_previews()
+        pcoll = _skp_wh_ensure_previews()
+        import tempfile
+        temp_dir = tempfile.mkdtemp(prefix='skp_wh_thumbs_')
+        for ent in entries:
+            mid = ent.get('id')
+            name = ent.get('title') or ent.get('name') or 'Model'
+            slug = self._slugify(name)
+            model_url = f"https://3dwarehouse.sketchup.com/model/{mid}/{slug}" if mid else ''
+            binaries = ent.get('binaries') if isinstance(ent.get('binaries'), dict) else {}
+            # Collect skp versions
+            skp_versions = []
+            for bname in (ent.get('binaryNames') or []):
+                if isinstance(bname, str) and re.fullmatch(r's\d+', bname):
+                    try:
+                        skp_versions.append(int(bname[1:]))
+                    except ValueError:
+                        pass
+            skp_versions.sort(reverse=True)
+            # Determine restricted (all available sXX have /restricted/ in contentUrl)
+            restricted = False
+            if skp_versions:
+                restricted_flags = []
+                for v in skp_versions:
+                    key = f's{v}'
+                    binfo = binaries.get(key)
+                    if isinstance(binfo, dict):
+                        c_url = binfo.get('contentUrl') or ''
+                        restricted_flags.append('/restricted/' in c_url)
+                if restricted_flags and all(restricted_flags):
+                    restricted = True
+            thumb_url, original_name = self._pick_thumbnail_binary(binaries)
+            icon_id = 0
+            if thumb_url:
+                try:
+                    # enforce extension
+                    ext = os.path.splitext(thumb_url.split('?',1)[0])[1]
+                    if ext.lower() not in ('.jpg', '.jpeg', '.png', '.webp'):
+                        ext = '.jpg'
+                    thumb_path = os.path.join(temp_dir, f"{mid}{ext}")
+                    with urllib.request.urlopen(urllib.request.Request(thumb_url, headers={'User-Agent': 'Mozilla/5.0'}), timeout=20) as ir, open(thumb_path, 'wb') as outf:
+                        shutil.copyfileobj(ir, outf)
+                    rel_name = os.path.basename(thumb_path)
+                    pcoll.load(rel_name, thumb_path, 'IMAGE')
+                    icon_id = pcoll[rel_name].icon_id
+                except Exception:
+                    icon_id = 0
+            _skp_wh_results.append({
+                'model_id': mid,
+                'model_name': slug,
+                'display_name': name,
+                'model_url': model_url,
+                'icon_id': icon_id,
+                'skp_versions': skp_versions,
+                'restricted': restricted,
+                'has_glb': 'glb' in binaries,
+            })
+        self.report({'INFO'}, f"Found {len(_skp_wh_results)} models (offset {offset})")
+        return {'FINISHED'}
+
+
+class SKPWH_OT_ImportResult(Operator):
+    bl_idname = 'skp_wh.import_result'
+    bl_label = 'Import Selected 3D Warehouse Model'
+    bl_description = 'Import this model using the SKP importer'
+    bl_options = {'INTERNAL', 'UNDO'}
+
+    model_id: StringProperty()
+    model_name: StringProperty()
+
+    def execute(self, context):
+        if not self.model_id:
+            return {'CANCELLED'}
+        base_url = f"https://3dwarehouse.sketchup.com/model/{self.model_id}/{self.model_name or 'Model'}"
+        try:
+            bpy.ops.import_scene.skp_warehouse_glb(warehouse_url=base_url)
+        except Exception as e:
+            self.report({'ERROR'}, f'Failed to start import: {e}')
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+
+class VIEW3D_PT_SketchupWarehouseBrowser(bpy.types.Panel):
+    bl_label = '3D Warehouse'
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = 'SketchUp'
+
+    def draw(self, context):
+        layout = self.layout
+        wm = context.window_manager
+        row = layout.row()
+        row.prop(wm, 'skp_wh_query', text='')
+        nav = layout.row(align=True)
+        nav.operator('skp_wh.search', text='', icon='VIEWZOOM').page_delta = 0
+        nav.operator('skp_wh.search', text='', icon='TRIA_LEFT').page_delta = -1
+        nav.operator('skp_wh.search', text='', icon='TRIA_RIGHT').page_delta = 1
+        layout.label(text=f"Offset: {wm.skp_wh_offset}")
+        if not _skp_wh_results:
+            layout.label(text='No results')
+            return
+        cols = 4
+        grid = layout.grid_flow(columns=cols, even_columns=True, even_rows=True, align=True)
+        for item in _skp_wh_results:
+            col = grid.column()
+            label_text = item.get('display_name','')[:12]
+            if item['icon_id']:
+                op = col.operator('skp_wh.import_result', text='', icon_value=item['icon_id'])
+            else:
+                op = col.operator('skp_wh.import_result', text='Import')
+            op.model_id = item['model_id']
+            op.model_name = item['model_name']
+            row2 = col.row(align=True)
+            row2.label(text=label_text)
+            if item.get('restricted'):
+                row2.label(icon='LOCKED')
+            elif not item.get('skp_versions') and item.get('has_glb'):
+                row2.label(icon='FILE_3D')
+
+
+classes_to_register_extra = [
+    SKPWH_OT_Search,
+    SKPWH_OT_ImportResult,
+    VIEW3D_PT_SketchupWarehouseBrowser,
+]
+
+
 def menu_func_import(self,
                      context):
     self.layout.operator(ImportSKP.bl_idname,
@@ -1381,6 +1637,8 @@ def register():
     bpy.utils.register_class(SketchupAddonPreferences)
     bpy.utils.register_class(ImportSKP)
     bpy.utils.register_class(ImportSketchupWarehouseGLB)
+    for c in classes_to_register_extra:
+        bpy.utils.register_class(c)
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     # bpy.utils.register_class(ExportSKP)
     # bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
@@ -1389,7 +1647,14 @@ def register():
 def unregister():
     bpy.utils.unregister_class(ImportSKP)
     bpy.utils.unregister_class(ImportSketchupWarehouseGLB)
+    for c in reversed(classes_to_register_extra):
+        bpy.utils.unregister_class(c)
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
     # bpy.utils.unregister_class(ExportSKP)
     # bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
     bpy.utils.unregister_class(SketchupAddonPreferences)
+    _skp_wh_clear_previews()
+    global _skp_wh_previews
+    if _skp_wh_previews:
+        previews.remove(_skp_wh_previews)
+        _skp_wh_previews = None
