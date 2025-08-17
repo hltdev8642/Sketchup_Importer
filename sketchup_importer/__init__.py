@@ -1373,6 +1373,8 @@ _skp_wh_result_map = {}  # id -> result dict
 # Added for paging
 _skp_wh_total_results = 0
 _skp_wh_total_pages = 0
+# Track last sort to reset page when changed
+_skp_wh_last_sort = ''
 
 
 def _skp_wh_get_prefs():
@@ -1405,14 +1407,25 @@ if not hasattr(bpy.types.WindowManager, 'skp_wh_offset'):
 # New page property (page index, 0-based)
 if not hasattr(bpy.types.WindowManager, 'skp_wh_page'):
     bpy.types.WindowManager.skp_wh_page = IntProperty(name="Page", default=0, min=0, description="Result page (0-based)")
-# New UI tuning properties for thumbnail size
+# Sort options property
+if not hasattr(bpy.types.WindowManager, 'skp_wh_sort'):
+    bpy.types.WindowManager.skp_wh_sort = EnumProperty(
+        name="Sort",
+        description="Sort order for 3D Warehouse search",
+        items=[
+            ('POPULARITY', 'Popularity', 'Sort by popularity (desc)'),
+            ('DATE', 'Date', 'Sort by creation date (newest first)'),
+            ('LIKES', 'Likes', 'Sort by review/like count (desc)'),
+        ],
+        default='POPULARITY'
+    )
+# Thumbnail / view mode properties (re-added after refactor)
 if not hasattr(bpy.types.WindowManager, 'skp_wh_thumb_cols'):
-    bpy.types.WindowManager.skp_wh_thumb_cols = IntProperty(name="Cols", default=2, min=1, max=6, description="Number of thumbnail columns")
+    bpy.types.WindowManager.skp_wh_thumb_cols = IntProperty(name="Cols", default=2, min=1, max=8, description="Grid columns")
 if not hasattr(bpy.types.WindowManager, 'skp_wh_thumb_scale'):
-    bpy.types.WindowManager.skp_wh_thumb_scale = FloatProperty(name="Scale", default=2.0, min=0.5, max=4.0, description="Thumbnail scale factor (grid mode)")
+    bpy.types.WindowManager.skp_wh_thumb_scale = FloatProperty(name="Scale", default=2.0, min=0.5, max=4.0, description="Grid thumbnail scale")
 if not hasattr(bpy.types.WindowManager, 'skp_wh_thumb_mode'):
     bpy.types.WindowManager.skp_wh_thumb_mode = EnumProperty(name="Mode", items=[('GRID','Grid','Grid thumbnails'),('GALLERY','Gallery','Large gallery thumbnails')], default='GALLERY')
-# Enum for gallery selection
 if not hasattr(bpy.types.WindowManager, 'skp_wh_selected'):
     bpy.types.WindowManager.skp_wh_selected = EnumProperty(name="Model", items=lambda self, ctx: _skp_wh_enum_items, description="Selected 3D Warehouse model")
 
@@ -1426,10 +1439,18 @@ class SKPWH_OT_Search(Operator):
     max_results: IntProperty(name='Max Results', default=24, min=1, max=96)
     page_delta: IntProperty(name='Page Delta', default=0)  # -1 prev, +1 next
 
-    def _build_api_url(self, query: str, offset: int) -> str:
+    def _build_api_url(self, query: str, offset: int, sort_key: str) -> str:
         from urllib.parse import quote
+        # Map internal sort enum to API sortBy expression
+        sort_map = {
+            'POPULARITY': 'popularity desc',
+            'DATE': 'createTime desc',
+            'LIKES': 'reviewCount desc',
+        }
+        sort_expr = sort_map.get(sort_key, 'popularity desc')
+        sort_param = sort_expr.replace(' ', '%20')
         base = ('https://embed-3dwarehouse.sketchup.com/warehouse/v1.0/entities'
-                '?sortBy=relevance%20desc&personalizeSearch=true&personalizeSearchAlgorithm=heuristic'
+                f'?sortBy={sort_param}'
                 '&contentType=3dw&showBinaryAttributes=true&showBinaryMetadata=true&showAttributes=true'
                 '&show=all&recordEvent=false&fq=binaryNames%3Dexists%3Dtrue')
         return f"{base}&q={quote(query)}&offset={offset}"
@@ -1471,28 +1492,28 @@ class SKPWH_OT_Search(Operator):
         return '', ''
 
     def execute(self, context):
-        global _skp_wh_last_query, _skp_wh_total_results, _skp_wh_total_pages
+        global _skp_wh_last_query, _skp_wh_total_results, _skp_wh_total_pages, _skp_wh_last_sort
         query = context.window_manager.skp_wh_query.strip()
         if not query:
             self.report({'WARNING'}, 'Empty query')
             return {'CANCELLED'}
         wm = context.window_manager
-        # Reset page if query changed
-        if query != _skp_wh_last_query:
+        current_sort = wm.skp_wh_sort
+        # Reset page if query or sort changed
+        if query != _skp_wh_last_query or current_sort != _skp_wh_last_sort:
             wm.skp_wh_page = 0
             _skp_wh_last_query = query
+            _skp_wh_last_sort = current_sort
         # Apply page delta
         if self.page_delta != 0:
             wm.skp_wh_page = max(0, wm.skp_wh_page + self.page_delta)
-            # If we already know total pages, clamp
             if _skp_wh_total_pages and wm.skp_wh_page >= _skp_wh_total_pages:
                 wm.skp_wh_page = max(0, _skp_wh_total_pages - 1)
-        # Compute offset from page
         offset = wm.skp_wh_page * self.max_results
-        wm.skp_wh_offset = offset  # keep legacy offset updated
+        wm.skp_wh_offset = offset
         prefs = _skp_wh_get_prefs()
         cookie = prefs.warehouse_cookie.strip() if prefs and getattr(prefs, 'warehouse_cookie', '') else ''
-        api_url = self._build_api_url(query, offset)
+        api_url = self._build_api_url(query, offset, current_sort)
         skp_log(f"Warehouse API search URL: {api_url}")
         headers = {
             'User-Agent': 'Mozilla/5.0',
@@ -1612,7 +1633,7 @@ class SKPWH_OT_Search(Operator):
             # Build enum item (identifier must be unique); use model_id
             if mid:
                 _skp_wh_result_map[mid] = _skp_wh_results[-1]
-        self.report({'INFO'}, f"Found {len(_skp_wh_results)} models (page {wm.skp_wh_page + 1}{' / ' + str(_skp_wh_total_pages) if _skp_wh_total_pages else ''})")
+        self.report({'INFO'}, f"Found {len(_skp_wh_results)} models (page {wm.skp_wh_page + 1}{' / ' + str(_skp_wh_total_pages) if _skp_wh_total_pages else ''}) | Sort: {current_sort}")
         # Rebuild enum items after results
         global _skp_wh_enum_items
         _skp_wh_enum_items = []
@@ -1676,6 +1697,9 @@ class VIEW3D_PT_SketchupWarehouseBrowser(bpy.types.Panel):
         wm = context.window_manager
         row = layout.row()
         row.prop(wm, 'skp_wh_query', text='')
+        # Sort selector
+        sort_row = layout.row(align=True)
+        sort_row.prop(wm, 'skp_wh_sort', expand=True)
         nav = layout.row(align=True)
         nav.operator('skp_wh.search', text='', icon='VIEWZOOM').page_delta = 0
         prev_op = nav.operator('skp_wh.search', text='', icon='TRIA_LEFT')
