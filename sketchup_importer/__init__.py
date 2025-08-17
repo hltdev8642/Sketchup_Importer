@@ -1370,6 +1370,9 @@ _skp_wh_results = []  # list of dicts: {model_id, model_name, model_url, icon_id
 _skp_wh_last_query = ''  # track last query to reset offset when changed
 _skp_wh_enum_items = []  # dynamic enum items for gallery view
 _skp_wh_result_map = {}  # id -> result dict
+# Added for paging
+_skp_wh_total_results = 0
+_skp_wh_total_pages = 0
 
 
 def _skp_wh_get_prefs():
@@ -1399,6 +1402,9 @@ def _skp_wh_clear_previews():
 bpy.types.WindowManager.skp_wh_query = StringProperty(name="Search", default="chair")
 if not hasattr(bpy.types.WindowManager, 'skp_wh_offset'):
     bpy.types.WindowManager.skp_wh_offset = IntProperty(name="Offset", default=0, min=0)
+# New page property (page index, 0-based)
+if not hasattr(bpy.types.WindowManager, 'skp_wh_page'):
+    bpy.types.WindowManager.skp_wh_page = IntProperty(name="Page", default=0, min=0, description="Result page (0-based)")
 # New UI tuning properties for thumbnail size
 if not hasattr(bpy.types.WindowManager, 'skp_wh_thumb_cols'):
     bpy.types.WindowManager.skp_wh_thumb_cols = IntProperty(name="Cols", default=2, min=1, max=6, description="Number of thumbnail columns")
@@ -1465,21 +1471,27 @@ class SKPWH_OT_Search(Operator):
         return '', ''
 
     def execute(self, context):
-        global _skp_wh_last_query
+        global _skp_wh_last_query, _skp_wh_total_results, _skp_wh_total_pages
         query = context.window_manager.skp_wh_query.strip()
         if not query:
             self.report({'WARNING'}, 'Empty query')
             return {'CANCELLED'}
         wm = context.window_manager
+        # Reset page if query changed
         if query != _skp_wh_last_query:
-            wm.skp_wh_offset = 0
+            wm.skp_wh_page = 0
             _skp_wh_last_query = query
+        # Apply page delta
         if self.page_delta != 0:
-            wm.skp_wh_offset = max(0, wm.skp_wh_offset + (self.page_delta * self.max_results))
-        offset = wm.skp_wh_offset
+            wm.skp_wh_page = max(0, wm.skp_wh_page + self.page_delta)
+            # If we already know total pages, clamp
+            if _skp_wh_total_pages and wm.skp_wh_page >= _skp_wh_total_pages:
+                wm.skp_wh_page = max(0, _skp_wh_total_pages - 1)
+        # Compute offset from page
+        offset = wm.skp_wh_page * self.max_results
+        wm.skp_wh_offset = offset  # keep legacy offset updated
         prefs = _skp_wh_get_prefs()
         cookie = prefs.warehouse_cookie.strip() if prefs and getattr(prefs, 'warehouse_cookie', '') else ''
-        import urllib.request, urllib.error, json, tempfile, os, shutil, re
         api_url = self._build_api_url(query, offset)
         skp_log(f"Warehouse API search URL: {api_url}")
         headers = {
@@ -1497,6 +1509,15 @@ class SKPWH_OT_Search(Operator):
         except Exception as e:
             self.report({'ERROR'}, f'API search failed: {e}')
             return {'CANCELLED'}
+        # Try to extract total result count (varies by API response schema)
+        total_candidates = []
+        if isinstance(data, dict):
+            for k in ('total', 'totalResults', 'resultCount', 'count', 'total_entities'):
+                v = data.get(k)
+                if isinstance(v, int) and v >= 0:
+                    total_candidates.append(v)
+        _skp_wh_total_results = max(total_candidates) if total_candidates else 0
+        _skp_wh_total_pages = math.ceil(_skp_wh_total_results / self.max_results) if _skp_wh_total_results else 0
         entries = self._parse_entities(data)
         if not entries:
             _skp_wh_clear_previews()
@@ -1505,7 +1526,6 @@ class SKPWH_OT_Search(Operator):
         entries = entries[:self.max_results]
         _skp_wh_clear_previews()
         pcoll = _skp_wh_ensure_previews()
-        import tempfile
         temp_dir = tempfile.mkdtemp(prefix='skp_wh_thumbs_')
         for ent in entries:
             mid = ent.get('id')
@@ -1592,7 +1612,7 @@ class SKPWH_OT_Search(Operator):
             # Build enum item (identifier must be unique); use model_id
             if mid:
                 _skp_wh_result_map[mid] = _skp_wh_results[-1]
-        self.report({'INFO'}, f"Found {len(_skp_wh_results)} models (offset {offset})")
+        self.report({'INFO'}, f"Found {len(_skp_wh_results)} models (page {wm.skp_wh_page + 1}{' / ' + str(_skp_wh_total_pages) if _skp_wh_total_pages else ''})")
         # Rebuild enum items after results
         global _skp_wh_enum_items
         _skp_wh_enum_items = []
@@ -1651,21 +1671,32 @@ class VIEW3D_PT_SketchupWarehouseBrowser(bpy.types.Panel):
     bl_category = 'SketchUp'
 
     def draw(self, context):
+        global _skp_wh_total_pages, _skp_wh_total_results
         layout = self.layout
         wm = context.window_manager
         row = layout.row()
         row.prop(wm, 'skp_wh_query', text='')
         nav = layout.row(align=True)
         nav.operator('skp_wh.search', text='', icon='VIEWZOOM').page_delta = 0
-        nav.operator('skp_wh.search', text='', icon='TRIA_LEFT').page_delta = -1
-        nav.operator('skp_wh.search', text='', icon='TRIA_RIGHT').page_delta = 1
+        prev_op = nav.operator('skp_wh.search', text='', icon='TRIA_LEFT')
+        prev_op.page_delta = -1
+        next_op = nav.operator('skp_wh.search', text='', icon='TRIA_RIGHT')
+        next_op.page_delta = 1
+        # Page indicator
+        page_str = f"Page: {wm.skp_wh_page + 1}"
+        if _skp_wh_total_pages:
+            page_str += f" / {_skp_wh_total_pages}"
+        layout.label(text=page_str)
+        if _skp_wh_total_results:
+            layout.label(text=f"Total Results: {_skp_wh_total_results}")
         mode_row = layout.row(align=True)
         mode_row.prop(wm, 'skp_wh_thumb_mode', expand=True)
         if wm.skp_wh_thumb_mode == 'GRID':
             size_row = layout.row(align=True)
             size_row.prop(wm, 'skp_wh_thumb_cols', text='Cols')
             size_row.prop(wm, 'skp_wh_thumb_scale', text='Scale')
-        layout.label(text=f"Offset: {wm.skp_wh_offset}")
+        # Remove old Offset label
+        # layout.label(text=f"Offset: {wm.skp_wh_offset}")
         if not _skp_wh_results:
             layout.label(text='No results')
             return
