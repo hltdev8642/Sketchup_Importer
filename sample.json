@@ -1,0 +1,995 @@
+{
+    "accessRole" : "viewer",
+    "allowComments" : false,
+    "attributes" : {
+        "3dw" : {
+            "gltfError" : {
+                "dataType" : "string",
+                "value" : "C:\\Renderbot\\versions\\0bf0655\\temp-umkw9s6c\\model.glb\nErrors: 0, Warnings: 0, Infos: 0, Hints: 0\nTime: 2ms\n\n"
+            },
+            "massRerender" : {
+                "dataType" : "int",
+                "value" : 1659366096
+            }
+        },
+        "categories" : {
+            "domain" : {
+                "dataType" : "string",
+                "value" : "InteriorDesign"
+            },
+            "subdomain" : {
+                "dataType" : "string",
+                "value" : ""
+            }
+        },
+        "imageCategories" : {
+            "Architecture" : {
+                "dataType" : "float",
+                "value" : 0.6545118689537048
+            },
+            "Door" : {
+                "dataType" : "float",
+                "value" : 0.6791113615036011
+            },
+            "Furniture" : {
+                "dataType" : "float",
+                "value" : 0.6603703498840332
+            },
+            "Glass" : {
+                "dataType" : "float",
+                "value" : 0.6446477174758911
+            },
+            "Line" : {
+                "dataType" : "float",
+                "value" : 0.8226431012153626
+            },
+            "Material_property" : {
+                "dataType" : "float",
+                "value" : 0.6991998553276062
+            },
+            "Rectangle" : {
+                "dataType" : "float",
+                "value" : 0.6208801269531250
+            },
+            "Room" : {
+                "dataType" : "float",
+                "value" : 0.7795166969299316
+            },
+            "Table" : {
+                "dataType" : "float",
+                "value" : 0.6974622011184692
+            },
+            "Vehicle_door" : {
+                "dataType" : "float",
+                "value" : 0.630065917968750
+            },
+            "Wall" : {
+                "dataType" : "float",
+                "value" : 0.8125073313713074
+            }
+        },
+        "safeSearch" : {
+            "adult" : {
+                "dataType" : "string",
+                "value" : "VERY_UNLIKELY"
+            },
+            "medical" : {
+                "dataType" : "string",
+                "value" : "VERY_UNLIKELY"
+            },
+            "racy" : {
+                "dataType" : "string",
+                "value" : "VERY_UNLIKELY"
+            },
+            "spoof" : {
+                "dataType" : "string",
+                "value" : "VERY_UNLIKELY"
+            },
+            "violence" : {
+                "dataType" : "string",
+                "value" : "VERY_UNLIKELY"
+            }
+        },
+        "skp" : {
+            "distanceFromOriginmm" : {
+                "dataType" : "float",
+                "value" : 4000.672890359955
+            },
+            "isClassified" : {
+                "dataType" : "boolean",
+                "value" : false
+            },
+            "isDynamicComponent" : {
+                "dataType" : "boolean",
+                "value" : false
+            },
+            "isGeoreferenced" : {
+                "dataType" : "boolean",
+                "value" : false
+            },
+            "layerCount" : {
+                "dataType" : "int",
+                "value" : 1
+            },
+            "materials" : {
+                "dataType" : "int",
+                "value" : 7
+            },
+            "modelDepthmm" : {
+                "dataType" : "float",
+                "value" : 3484.092237296944
+            },
+            "modelHeightmm" : {
+                "dataType" : "float",
+                "value" : 5289.841226291586
+            },
+            "modelWidthmm" : {
+                "dataType" : "float",
+                "value" : 2743.20
+            },
+            "polygons" : {
+                "dataType" : "int",
+                "value" : 32
+            },
+            "renderMsg" : {
+                "dataType" : "string",
+                "value" : "Render successful."
+            },
+            "renderResult" : {
+                "dataType" : "int",
+                "value" : 0
+            },
+            "renderTime" : {
+                "dataType" : "int",
+                "value" : 15
+            },
+            "sourceBinary" : {
+                "dataType" : "string",
+                "value" : "s18"
+            },
+            "sourceBinaryMd5" : {
+                "dataType" : "string",
+                "value" : "XpccBs5oxNLjBBPxZzRh8w=="
+            },
+            "unitOfMeasure" : {
+                "dataType" : "string",
+                "value" : "inches"
+            }
+        }
+    },
+    "baseAccessLevel" : "viewer",
+    binaries.bot_lt.contentUrl
+    "binaries" : {
+        "bot_lt" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/public/bae69d8b-f8c5-492a-a092-d6f0908f7a26",
+            "createTime" : "2020-01-18 12:25:03.833",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "jpg",
+            "fileSize" : 22829,
+            "id" : "bae69d8b-f8c5-492a-a092-d6f0908f7a26",
+            "isMetadata" : true,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2020-01-18 12:25:03.833",
+            "name" : "bot_lt",
+            "originalFileName" : "large_thumbnail.jpg",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/bot_lt?download=true"
+        },
+        "bot_lt_ao" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/public/600e2a49-801a-4d40-8885-8dac84509270",
+            "createTime" : "2024-07-22 15:45:37.464",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "jpeg",
+            "fileSize" : 20527,
+            "id" : "600e2a49-801a-4d40-8885-8dac84509270",
+            "isMetadata" : true,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2024-07-22 15:45:37.464",
+            "name" : "bot_lt_ao",
+            "originalFileName" : "thumbnail_ao.jpeg",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/bot_lt_ao?download=true"
+        },
+        "bot_lt_wp" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/public/978ec72c-0f89-4dde-9851-0580a4cfbc4e",
+            "createTime" : "2020-01-18 12:25:04.512",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "webp",
+            "fileSize" : 8894,
+            "id" : "978ec72c-0f89-4dde-9851-0580a4cfbc4e",
+            "isMetadata" : true,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2020-01-18 12:25:04.512",
+            "name" : "bot_lt_wp",
+            "originalFileName" : "large_thumbnail.webp",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/bot_lt_wp?download=true"
+        },
+        "bot_lt_wp_ao" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/public/4bed16d9-e793-4056-98fb-d5e79afce754",
+            "createTime" : "2024-07-22 15:45:37.696",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "webp",
+            "fileSize" : 7764,
+            "id" : "4bed16d9-e793-4056-98fb-d5e79afce754",
+            "isMetadata" : true,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2024-07-22 15:45:37.696",
+            "name" : "bot_lt_wp_ao",
+            "originalFileName" : "thumbnail_ao.webp",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/bot_lt_wp_ao?download=true"
+        },
+        "bot_st" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/public/64dd9f18-9f56-4336-aced-14ab816d8f6d",
+            "createTime" : "2020-01-18 12:25:03.628",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "jpg",
+            "fileSize" : 9828,
+            "id" : "64dd9f18-9f56-4336-aced-14ab816d8f6d",
+            "isMetadata" : true,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2020-01-18 12:25:03.628",
+            "name" : "bot_st",
+            "originalFileName" : "small_thumbnail.jpg",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/bot_st?download=true"
+        },
+        "bot_st_ao" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/public/3a9b7fc8-de88-4f8a-8033-52d55352cea4",
+            "createTime" : "2024-07-22 15:45:37.007",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "jpeg",
+            "fileSize" : 7166,
+            "id" : "3a9b7fc8-de88-4f8a-8033-52d55352cea4",
+            "isMetadata" : true,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2024-07-22 15:45:37.007",
+            "name" : "bot_st_ao",
+            "originalFileName" : "thumbnail_ao.jpeg",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/bot_st_ao?download=true"
+        },
+        "bot_st_wp" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/public/b950ab1f-48ab-4022-878e-858fe340f3e7",
+            "createTime" : "2020-01-18 12:25:04.338",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "webp",
+            "fileSize" : 4794,
+            "id" : "b950ab1f-48ab-4022-878e-858fe340f3e7",
+            "isMetadata" : true,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2020-01-18 12:25:04.338",
+            "name" : "bot_st_wp",
+            "originalFileName" : "small_thumbnail.webp",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/bot_st_wp?download=true"
+        },
+        "bot_st_wp_ao" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/public/be1e54eb-2621-41e4-9293-fcf6091b9d2a",
+            "createTime" : "2024-07-22 15:45:37.246",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "webp",
+            "fileSize" : 3212,
+            "id" : "be1e54eb-2621-41e4-9293-fcf6091b9d2a",
+            "isMetadata" : true,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2024-07-22 15:45:37.246",
+            "name" : "bot_st_wp_ao",
+            "originalFileName" : "thumbnail_ao.webp",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/bot_st_wp_ao?download=true"
+        },
+        "bot_tt" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/public/eb92502c-f90c-4128-a4ff-fe79997a8383",
+            "createTime" : "2020-01-18 12:25:03.414",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "jpg",
+            "fileSize" : 3325,
+            "id" : "eb92502c-f90c-4128-a4ff-fe79997a8383",
+            "isMetadata" : true,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2020-01-18 12:25:03.414",
+            "name" : "bot_tt",
+            "originalFileName" : "tiny_thumbnail.jpg",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/bot_tt?download=true"
+        },
+        "bot_tt_ao" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/public/0aaf488d-a1cb-43f5-aa4e-01035a3636ef",
+            "createTime" : "2024-07-22 15:45:36.514",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "jpeg",
+            "fileSize" : 2694,
+            "id" : "0aaf488d-a1cb-43f5-aa4e-01035a3636ef",
+            "isMetadata" : true,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2024-07-22 15:45:36.514",
+            "name" : "bot_tt_ao",
+            "originalFileName" : "thumbnail_ao.jpeg",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/bot_tt_ao?download=true"
+        },
+        "bot_tt_wp" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/public/3d6abd0d-2ee1-438e-8f3e-16a72104a114",
+            "createTime" : "2020-01-18 12:25:04.165",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "webp",
+            "fileSize" : 1886,
+            "id" : "3d6abd0d-2ee1-438e-8f3e-16a72104a114",
+            "isMetadata" : true,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2020-01-18 12:25:04.165",
+            "name" : "bot_tt_wp",
+            "originalFileName" : "tiny_thumbnail.webp",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/bot_tt_wp?download=true"
+        },
+        "bot_tt_wp_ao" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/public/c85da43d-a7ac-4695-8b71-778b19eb0dba",
+            "createTime" : "2024-07-22 15:45:36.772",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "webp",
+            "fileSize" : 1320,
+            "id" : "c85da43d-a7ac-4695-8b71-778b19eb0dba",
+            "isMetadata" : true,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2024-07-22 15:45:36.772",
+            "name" : "bot_tt_wp_ao",
+            "originalFileName" : "thumbnail_ao.webp",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/bot_tt_wp_ao?download=true"
+        },
+"glb" : {
+            "contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/public/a4790a03-eb5f-4aba-9133-44f70a0b7f4f",
+            "createTime" : "2021-11-12 18:47:36.729",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "glb",
+            "fileSize" : 5712,
+            "id" : "a4790a03-eb5f-4aba-9133-44f70a0b7f4f",
+            "isMetadata" : true,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2021-11-12 18:47:36.729",
+            "name" : "glb",
+            "originalFileName" : "Terry Alm Shed.glb",
+            "url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/glb?download=true"
+        },
+        "s17" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/restricted/e554b886-c479-4fb5-858d-6fdbdf4ef438",
+            "createTime" : "2020-01-18 12:25:04.919",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "skp",
+            "fileSize" : 176252,
+            "id" : "e554b886-c479-4fb5-858d-6fdbdf4ef438",
+            "isMetadata" : false,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2020-01-18 12:25:04.919",
+            "name" : "s17",
+            "originalFileName" : "Terry Alm Shed.skp",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/s17?download=true"
+        },
+        "s18" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/restricted/2ae7a59e-195a-42f1-80f0-a7037d5e6e84",
+            "createTime" : "2019-08-20 17:49:34.860",
+            "creator" : {
+                "displayName" : "michael S.",
+                "externalResourceType" : "user",
+                "id" : "c17bbf44-486a-4ae5-bc06-fa136d48d2f6",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : "8ca50ad1-a638-42c9-a089-f8b1a5b38827"
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "skp",
+            "fileSize" : 176157,
+            "id" : "2ae7a59e-195a-42f1-80f0-a7037d5e6e84",
+            "isMetadata" : false,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "michael S.",
+                "externalResourceType" : "user",
+                "id" : "c17bbf44-486a-4ae5-bc06-fa136d48d2f6",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : "8ca50ad1-a638-42c9-a089-f8b1a5b38827"
+            },
+            "modifyTime" : "2019-08-20 17:49:34.860",
+            "name" : "s18",
+            "originalFileName" : "Terry Alm Shed.skp",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/s18?download=true"
+        },
+        "s19" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/restricted/f667ad7f-25e8-4657-9b7e-d66c80a2c0e6",
+            "createTime" : "2020-01-18 12:25:05.257",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "skp",
+            "fileSize" : 177861,
+            "id" : "f667ad7f-25e8-4657-9b7e-d66c80a2c0e6",
+            "isMetadata" : false,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2020-01-18 12:25:05.257",
+            "name" : "s19",
+            "originalFileName" : "Terry Alm Shed.skp",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/s19?download=true"
+        },
+        "s20" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/restricted/f544178f-2cb9-443c-b111-d80dbaf3452d",
+            "createTime" : "2020-01-18 12:25:05.495",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "skp",
+            "fileSize" : 177916,
+            "id" : "f544178f-2cb9-443c-b111-d80dbaf3452d",
+            "isMetadata" : false,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2020-01-18 12:25:05.495",
+            "name" : "s20",
+            "originalFileName" : "Terry Alm Shed.skp",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/s20?download=true"
+        },
+        "s21" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/restricted/69eb4366-2a64-41df-b156-bc91f32235d5",
+            "createTime" : "2021-11-12 18:47:30.001",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "skp",
+            "fileSize" : 139061,
+            "id" : "69eb4366-2a64-41df-b156-bc91f32235d5",
+            "isMetadata" : false,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2021-11-12 18:47:30.001",
+            "name" : "s21",
+            "originalFileName" : "Terry Alm Shed.skp",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/s21?download=true"
+        },
+        "s8" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/restricted/62e45300-2f16-40c7-adbb-cbbcf8c2a1d6",
+            "createTime" : "2020-01-18 12:25:05.707",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "skp",
+            "fileSize" : 107478,
+            "id" : "62e45300-2f16-40c7-adbb-cbbcf8c2a1d6",
+            "isMetadata" : false,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2020-01-18 12:25:05.707",
+            "name" : "s8",
+            "originalFileName" : "Terry Alm Shed.skp",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/s8?download=true"
+        },
+        "trimBim" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/restricted/8028099e-6daf-4f5c-81a1-95bd0d315c8e",
+            "createTime" : "2024-07-22 15:45:41.657",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "trb",
+            "fileSize" : 192568,
+            "id" : "8028099e-6daf-4f5c-81a1-95bd0d315c8e",
+            "isMetadata" : false,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2024-07-22 15:45:41.657",
+            "name" : "trimBim",
+            "originalFileName" : "Terry Alm Shed.trb",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/trimBim?download=true"
+        },
+        "usdz" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/public/0057ee4b-824d-4d24-8548-94e9722388bf",
+            "createTime" : "2022-09-02 12:15:11.497",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "usdz",
+            "fileSize" : 8214,
+            "id" : "0057ee4b-824d-4d24-8548-94e9722388bf",
+            "isMetadata" : true,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2022-09-02 12:15:11.497",
+            "name" : "usdz",
+            "originalFileName" : "Terry Alm Shed.usdz",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/usdz?download=true"
+        },
+        "zip" : {
+"contentUrl" : "https://download-warehouse.sketchup.com/warehouse/v1.0/content/restricted/a046bd65-0f81-4cc2-b03a-a73bad6e3185",
+            "createTime" : "2020-01-18 12:25:10.777",
+            "creator" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "entity" : {
+                "contentType" : "3dw",
+                "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+            },
+            "ext" : "zip",
+            "fileSize" : 3779,
+            "id" : "a046bd65-0f81-4cc2-b03a-a73bad6e3185",
+            "isMetadata" : false,
+            "jobs" : [],
+            "modifier" : {
+                "displayName" : "renderserver renderserver",
+                "externalResourceType" : "user",
+                "id" : "udc85510d-792c-4110-b1eb-155b67e0aea0",
+                "isVerified" : false,
+                "pictureUrl" : null,
+                "trimbleId" : null
+            },
+            "modifyTime" : "2020-01-18 12:25:10.777",
+            "name" : "zip",
+            "originalFileName" : "Terry Alm Shed.zip",
+"url" : "https://3dwarehouse.sketchup.com/warehouse/v1.0/entities/aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef/binaries/zip?download=true"
+        }
+    },
+    "binaryNames" : [
+        "bot_lt_wp",
+        "s17",
+        "bot_st_wp_ao",
+        "s19",
+        "s18",
+        "bot_st_ao",
+        "bot_tt_ao",
+        "bot_lt_ao",
+        "usdz",
+        "bot_tt",
+        "glb",
+        "s20",
+        "s21",
+        "zip",
+        "bot_st_wp",
+        "bot_lt_wp_ao",
+        "bot_st",
+        "bot_lt",
+        "s8",
+        "bot_tt_wp_ao",
+        "bot_tt_wp",
+        "trimBim"
+    ],
+    "class" : "entity",
+    "commentCount" : 0,
+    "contentType" : "3dw",
+    "contributors" : [],
+    "copyright" : "",
+    "createTime" : "2019-08-20 17:49:33.934",
+    "creator" : {
+        "displayName" : "michael S.",
+        "externalResourceType" : "user",
+        "id" : "c17bbf44-486a-4ae5-bc06-fa136d48d2f6",
+        "isVerified" : false,
+        "pictureUrl" : null,
+        "trimbleId" : "8ca50ad1-a638-42c9-a089-f8b1a5b38827"
+    },
+    "currentUserRating" : null,
+    "description" : "Shed",
+    "details" : "",
+    "downloads" : 1164,
+    "externalId" : null,
+    "externalUrl" : "",
+    "id" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef",
+    "immutableFields" : [],
+    "isCertified" : false,
+    "isHidden" : false,
+    "isPrivate" : false,
+    "jobs" : [
+        {
+            "binary" : null,
+            "createTime" : "2022-08-08 05:31:51.527",
+            "entity" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef",
+            "id" : "e2bc7500-984d-4590-bc74-bbbc216c244c",
+            "jobType" : "RERENDER",
+            "modifyTime" : "2024-07-22 15:45:42.330",
+            "name" : null,
+            "progress" : 100,
+            "resultCode" : "RENDER_SUCCESS",
+            "state" : "{\"jobId\":\"aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef-1eeb4af2\",\"tasks\":[{\"taskName\":\"queryEntityWhpMetadata\",\"startTime\":1721663078143,\"endTime\":1721663078177,\"state\":\"FINISHED\",\"failsWhpJob\":true},{\"taskName\":\"classifyUnknownSkp\",\"startTime\":1721663078177,\"endTime\":1721663078177,\"state\":\"FINISHED\",\"failsWhpJob\":true},{\"taskName\":\"downloadSourceBinary\",\"startTime\":1721663078177,\"endTime\":1721663078533,\"state\":\"FINISHED\",\"failsWhpJob\":true},{\"taskName\":\"renderModelThumbnails\",\"startTime\":1721663078533,\"endTime\":1721663137983,\"state\":\"FINISHED\",\"failsWhpJob\":true},{\"taskName\":\"generateTrimBim\",\"startTime\":1721663137983,\"endTime\":1721663141928,\"state\":\"FINISHED\"}],\"skipped\":false}",
+            "status" : "SUCCESS",
+            "subjectId" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+        },
+        {
+            "binary" : null,
+            "createTime" : "2019-08-20 17:49:34.911",
+            "entity" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef",
+            "id" : "f61f4689-cc1f-4ebd-9df3-32499ba8bbd1",
+            "jobType" : "RENDER_BOT",
+            "modifyTime" : "2019-08-20 17:50:30.724",
+            "name" : "s18",
+            "progress" : 100,
+            "resultCode" : null,
+            "state" : null,
+            "status" : "SUCCESS",
+            "subjectId" : "aeba7cdc-4bc0-4d9b-a1a2-f84d5590f2ef"
+        }
+    ],
+    "location" : {
+        "altitude" : null,
+        "latitude" : null,
+        "longitude" : null
+    },
+    "materialCount" : 7,
+    "modifier" : {
+        "displayName" : "michael S.",
+        "externalResourceType" : "user",
+        "id" : "c17bbf44-486a-4ae5-bc06-fa136d48d2f6",
+        "isVerified" : false,
+        "pictureUrl" : null,
+        "trimbleId" : "8ca50ad1-a638-42c9-a089-f8b1a5b38827"
+    },
+    "modifyTime" : "2019-08-20 17:49:33.934",
+    "parentCatalogId" : null,
+    "reviewCount" : 9,
+    "source" : "",
+    "subComponents" : [],
+    "subjectClass" : "entity",
+    "subtype" : null,
+    "superComponents" : [],
+    "tags" : [],
+    "title" : "Terry Alm Shed",
+    "type" : "SKETCHUP_MODEL",
+    "views" : 2723
+}
