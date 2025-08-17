@@ -1368,6 +1368,8 @@ class ImportSketchupWarehouseGLB(Operator):
 _skp_wh_previews = None
 _skp_wh_results = []  # list of dicts: {model_id, model_name, model_url, icon_id}
 _skp_wh_last_query = ''  # track last query to reset offset when changed
+_skp_wh_enum_items = []  # dynamic enum items for gallery view
+_skp_wh_result_map = {}  # id -> result dict
 
 
 def _skp_wh_get_prefs():
@@ -1397,6 +1399,16 @@ def _skp_wh_clear_previews():
 bpy.types.WindowManager.skp_wh_query = StringProperty(name="Search", default="chair")
 if not hasattr(bpy.types.WindowManager, 'skp_wh_offset'):
     bpy.types.WindowManager.skp_wh_offset = IntProperty(name="Offset", default=0, min=0)
+# New UI tuning properties for thumbnail size
+if not hasattr(bpy.types.WindowManager, 'skp_wh_thumb_cols'):
+    bpy.types.WindowManager.skp_wh_thumb_cols = IntProperty(name="Cols", default=2, min=1, max=6, description="Number of thumbnail columns")
+if not hasattr(bpy.types.WindowManager, 'skp_wh_thumb_scale'):
+    bpy.types.WindowManager.skp_wh_thumb_scale = FloatProperty(name="Scale", default=2.0, min=0.5, max=4.0, description="Thumbnail scale factor (grid mode)")
+if not hasattr(bpy.types.WindowManager, 'skp_wh_thumb_mode'):
+    bpy.types.WindowManager.skp_wh_thumb_mode = EnumProperty(name="Mode", items=[('GRID','Grid','Grid thumbnails'),('GALLERY','Gallery','Large gallery thumbnails')], default='GALLERY')
+# Enum for gallery selection
+if not hasattr(bpy.types.WindowManager, 'skp_wh_selected'):
+    bpy.types.WindowManager.skp_wh_selected = EnumProperty(name="Model", items=lambda self, ctx: _skp_wh_enum_items, description="Selected 3D Warehouse model")
 
 
 class SKPWH_OT_Search(Operator):
@@ -1522,6 +1534,31 @@ class SKPWH_OT_Search(Operator):
                         restricted_flags.append('/restricted/' in c_url)
                 if restricted_flags and all(restricted_flags):
                     restricted = True
+            # Polygon count
+            poly_count = None
+            try:
+                poly_count = ent.get('attributes', {}).get('skp', {}).get('polygons', {}).get('value')
+            except Exception:
+                poly_count = None
+            # File size from highest version skp binary
+            file_size = None
+            skp_filename = ''
+            if skp_versions:
+                for v in skp_versions:  # first (highest) available
+                    key = f's{v}'
+                    binfo = binaries.get(key)
+                    if isinstance(binfo, dict):
+                        file_size = binfo.get('fileSize')
+                        skp_filename = binfo.get('originalFileName', '')
+                        if file_size:
+                            break
+            def _fmt_size(num):
+                if not num:
+                    return '—'
+                for unit in ('B','KB','MB','GB'):
+                    if num < 1024 or unit == 'GB':
+                        return f"{num:.1f}{unit}" if unit != 'B' else f"{num}B"
+                    num /= 1024.0
             thumb_url, original_name = self._pick_thumbnail_binary(binaries)
             icon_id = 0
             if thumb_url:
@@ -1547,8 +1584,22 @@ class SKPWH_OT_Search(Operator):
                 'skp_versions': skp_versions,
                 'restricted': restricted,
                 'has_glb': 'glb' in binaries,
+                'poly_count': poly_count,
+                'file_size': file_size,
+                'file_size_fmt': _fmt_size(file_size),
+                'skp_filename': skp_filename or ent.get('title') or ''
             })
+            # Build enum item (identifier must be unique); use model_id
+            if mid:
+                _skp_wh_result_map[mid] = _skp_wh_results[-1]
         self.report({'INFO'}, f"Found {len(_skp_wh_results)} models (offset {offset})")
+        # Rebuild enum items after results
+        global _skp_wh_enum_items
+        _skp_wh_enum_items = []
+        for r in _skp_wh_results:
+            if r['model_id']:
+                name_disp = (r['display_name'][:32] + ('…' if len(r['display_name'])>32 else ''))
+                _skp_wh_enum_items.append((r['model_id'], name_disp, r['model_url'], r['icon_id'], len(_skp_wh_enum_items)))
         return {'FINISHED'}
 
 
@@ -1573,6 +1624,26 @@ class SKPWH_OT_ImportResult(Operator):
         return {'FINISHED'}
 
 
+class SKPWH_OT_ImportSelected(Operator):
+    bl_idname = 'skp_wh.import_selected'
+    bl_label = 'Import Selected'
+    bl_description = 'Import the selected gallery model'
+    bl_options = {'INTERNAL','UNDO'}
+    def execute(self, context):
+        wm = context.window_manager
+        mid = wm.skp_wh_selected
+        if not mid or mid not in _skp_wh_result_map:
+            self.report({'WARNING'}, 'Nothing selected')
+            return {'CANCELLED'}
+        res = _skp_wh_result_map[mid]
+        try:
+            bpy.ops.skp_wh.import_result('INVOKE_DEFAULT', model_id=res['model_id'], model_name=res['model_name'])
+        except Exception as e:
+            self.report({'ERROR'}, f'Import failed: {e}')
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+
 class VIEW3D_PT_SketchupWarehouseBrowser(bpy.types.Panel):
     bl_label = '3D Warehouse'
     bl_space_type = 'VIEW_3D'
@@ -1588,32 +1659,75 @@ class VIEW3D_PT_SketchupWarehouseBrowser(bpy.types.Panel):
         nav.operator('skp_wh.search', text='', icon='VIEWZOOM').page_delta = 0
         nav.operator('skp_wh.search', text='', icon='TRIA_LEFT').page_delta = -1
         nav.operator('skp_wh.search', text='', icon='TRIA_RIGHT').page_delta = 1
+        mode_row = layout.row(align=True)
+        mode_row.prop(wm, 'skp_wh_thumb_mode', expand=True)
+        if wm.skp_wh_thumb_mode == 'GRID':
+            size_row = layout.row(align=True)
+            size_row.prop(wm, 'skp_wh_thumb_cols', text='Cols')
+            size_row.prop(wm, 'skp_wh_thumb_scale', text='Scale')
         layout.label(text=f"Offset: {wm.skp_wh_offset}")
         if not _skp_wh_results:
             layout.label(text='No results')
             return
-        cols = 4
-        grid = layout.grid_flow(columns=cols, even_columns=True, even_rows=True, align=True)
-        for item in _skp_wh_results:
-            col = grid.column()
-            label_text = item.get('display_name','')[:12]
-            if item['icon_id']:
-                op = col.operator('skp_wh.import_result', text='', icon_value=item['icon_id'])
-            else:
-                op = col.operator('skp_wh.import_result', text='Import')
-            op.model_id = item['model_id']
-            op.model_name = item['model_name']
-            row2 = col.row(align=True)
-            row2.label(text=label_text)
-            if item.get('restricted'):
-                row2.label(icon='LOCKED')
-            elif not item.get('skp_versions') and item.get('has_glb'):
-                row2.label(icon='FILE_3D')
+        if wm.skp_wh_thumb_mode == 'GALLERY':
+            layout.template_icon_view(wm, 'skp_wh_selected', show_labels=True)
+            # Details of selection
+            sel = wm.skp_wh_selected
+            if sel and sel in _skp_wh_result_map:
+                r = _skp_wh_result_map[sel]
+                box = layout.box()
+                box.label(text=r.get('display_name',''))
+                stats = []
+                if r.get('skp_versions'):
+                    stats.append('s'+str(r['skp_versions'][0]))
+                if r.get('file_size_fmt'):
+                    stats.append(r['file_size_fmt'])
+                if r.get('poly_count') is not None:
+                    stats.append(f"{r['poly_count']} tris")
+                box.label(text=' | '.join(stats) if stats else '—')
+                if r.get('restricted'):
+                    box.label(text='Restricted model (cookie may be required)', icon='LOCKED')
+                elif not r.get('skp_versions') and r.get('has_glb'):
+                    box.label(text='GLB only (no SKP versions)', icon='FILE_3D')
+                box.operator('skp_wh.import_selected', icon='IMPORT')
+        else:
+            cols = max(1, wm.skp_wh_thumb_cols)
+            grid = layout.grid_flow(columns=cols, even_columns=True, even_rows=True, align=True)
+            scale = wm.skp_wh_thumb_scale
+            for item in _skp_wh_results:
+                col = grid.column()
+                icon_col = col.column()
+                icon_col.scale_x = scale
+                icon_col.scale_y = scale
+                title = item.get('display_name','')
+                if item['icon_id']:
+                    op = icon_col.operator('skp_wh.import_result', text='', icon_value=item['icon_id'])
+                else:
+                    op = icon_col.operator('skp_wh.import_result', text='Import')
+                op.model_id = item['model_id']
+                op.model_name = item['model_name']
+                info_col = col.column(align=True)
+                name_line = (title[:40] + ('…' if len(title) > 40 else ''))
+                info_col.label(text=name_line)
+                stats = []
+                if item.get('skp_versions'):
+                    stats.append(f"s{item['skp_versions'][0]}")
+                if item.get('file_size_fmt'):
+                    stats.append(item['file_size_fmt'])
+                if item.get('poly_count') is not None:
+                    stats.append(f"{item['poly_count']} tris")
+                info_col.label(text=' | '.join(stats) if stats else '—')
+                flags_row = info_col.row(align=True)
+                if item.get('restricted'):
+                    flags_row.label(text='Restricted', icon='LOCKED')
+                elif not item.get('skp_versions') and item.get('has_glb'):
+                    flags_row.label(text='GLB only', icon='FILE_3D')
 
 
 classes_to_register_extra = [
     SKPWH_OT_Search,
     SKPWH_OT_ImportResult,
+    SKPWH_OT_ImportSelected,
     VIEW3D_PT_SketchupWarehouseBrowser,
 ]
 
