@@ -1419,6 +1419,9 @@ if not hasattr(bpy.types.WindowManager, 'skp_wh_sort'):
         ],
         default='POPULARITY'
     )
+# New URL input property
+if not hasattr(bpy.types.WindowManager, 'skp_wh_url'):
+    bpy.types.WindowManager.skp_wh_url = StringProperty(name="Warehouse URL", default="", description="Paste a 3D Warehouse URL for direct download or collection loading")
 # Thumbnail / view mode properties (re-added after refactor)
 if not hasattr(bpy.types.WindowManager, 'skp_wh_thumb_cols'):
     bpy.types.WindowManager.skp_wh_thumb_cols = IntProperty(name="Cols", default=2, min=1, max=8, description="Grid columns")
@@ -1450,7 +1453,7 @@ class SKPWH_OT_Search(Operator):
         sort_expr = sort_map.get(sort_key, 'popularity desc')
         sort_param = sort_expr.replace(' ', '%20')
         base = ('https://embed-3dwarehouse.sketchup.com/warehouse/v1.0/entities'
-                f'?sortBy={sort_param}'
+                f'?sortBy={sort_param}&personalizeSearch=true&personalizeSearchAlgorithm=heuristic'
                 '&contentType=3dw&showBinaryAttributes=true&showBinaryMetadata=true&showAttributes=true'
                 '&show=all&recordEvent=false&fq=binaryNames%3Dexists%3Dtrue')
         return f"{base}&q={quote(query)}&offset={offset}"
@@ -1608,12 +1611,13 @@ class SKPWH_OT_Search(Operator):
                     ext = os.path.splitext(thumb_url.split('?',1)[0])[1]
                     if ext.lower() not in ('.jpg', '.jpeg', '.png', '.webp'):
                         ext = '.jpg'
-                    thumb_path = os.path.join(temp_dir, f"{mid}{ext}")
+                    # Use deterministic preview key that includes the model id to avoid collisions
+                    preview_key = f"skp_wh_{mid}{ext}"
+                    thumb_path = os.path.join(temp_dir, preview_key)
                     with urllib.request.urlopen(urllib.request.Request(thumb_url, headers={'User-Agent': 'Mozilla/5.0'}), timeout=20) as ir, open(thumb_path, 'wb') as outf:
                         shutil.copyfileobj(ir, outf)
-                    rel_name = os.path.basename(thumb_path)
-                    pcoll.load(rel_name, thumb_path, 'IMAGE')
-                    icon_id = pcoll[rel_name].icon_id
+                    pcoll.load(preview_key, thumb_path, 'IMAGE')
+                    icon_id = pcoll[preview_key].icon_id
                 except Exception:
                     icon_id = 0
             _skp_wh_results.append({
@@ -1641,6 +1645,14 @@ class SKPWH_OT_Search(Operator):
             if r['model_id']:
                 name_disp = (r['display_name'][:32] + ('…' if len(r['display_name'])>32 else ''))
                 _skp_wh_enum_items.append((r['model_id'], name_disp, r['model_url'], r['icon_id'], len(_skp_wh_enum_items)))
+        # Ensure a valid selection exists after search so the UI shows thumbnails for the first result
+        try:
+            wm = context.window_manager
+            if _skp_wh_enum_items:
+                first_id = _skp_wh_enum_items[0][0]
+                wm.skp_wh_selected = first_id
+        except Exception:
+            pass
         return {'FINISHED'}
 
 
@@ -1685,6 +1697,348 @@ class SKPWH_OT_ImportSelected(Operator):
         return {'FINISHED'}
 
 
+class SKPWH_OT_LoadURL(Operator):
+    bl_idname = 'skp_wh.load_url'
+    bl_label = 'Load from URL'
+    bl_description = 'Load collection or import single model from 3D Warehouse URL'
+    bl_options = {'INTERNAL'}
+
+    def execute(self, context):
+        wm = context.window_manager
+        url = wm.skp_wh_url.strip()
+        if not url:
+            self.report({'WARNING'}, 'No URL provided')
+            return {'CANCELLED'}
+        
+        # Parse URL
+        if '/collection/' in url:
+            # Collection URL
+            collection_id = self._extract_collection_id(url)
+            if not collection_id:
+                self.report({'ERROR'}, 'Could not parse collection ID from URL')
+                return {'CANCELLED'}
+            # Load collection into search results
+            try:
+                self._load_collection(context, collection_id)
+                # Force a complete UI redraw
+                for area in context.screen.areas:
+                    if area.type == 'VIEW_3D':
+                        area.tag_redraw()
+                        break
+                self.report({'INFO'}, f'Loaded collection with {len(_skp_wh_results)} models')
+            except Exception as e:
+                self.report({'ERROR'}, f'Failed to load collection: {e}')
+                return {'CANCELLED'}
+        else:
+            # Single model URL
+            model_id = self._extract_model_id(url)
+            if not model_id:
+                self.report({'ERROR'}, 'Could not parse model ID from URL')
+                return {'CANCELLED'}
+            # Import single model
+            try:
+                base_url = f"https://3dwarehouse.sketchup.com/model/{model_id}/Model"
+                bpy.ops.import_scene.skp_warehouse_glb(warehouse_url=base_url)
+                self.report({'INFO'}, 'Imported single model')
+            except Exception as e:
+                self.report({'ERROR'}, f'Failed to import model: {e}')
+                return {'CANCELLED'}
+        return {'FINISHED'}
+
+    @staticmethod
+    def _extract_model_id(url: str):
+        pattern = r'https?://3dwarehouse\.sketchup\.com/model/([0-9a-fA-F\-]{30,36})/'
+        m = re.match(pattern, url.strip())
+        if m:
+            return m.group(1)
+        return None
+
+    @staticmethod
+    def _extract_collection_id(url: str):
+        pattern = r'https?://3dwarehouse\.sketchup\.com/collection/([0-9a-fA-F\-]{30,36})/'
+        m = re.match(pattern, url.strip())
+        if m:
+            return m.group(1)
+        return None
+
+    def _load_collection(self, context, collection_id: str):
+        global _skp_wh_results, _skp_wh_result_map, _skp_wh_enum_items, _skp_wh_total_results, _skp_wh_total_pages
+        # Reset page when loading a new collection
+        context.window_manager.skp_wh_page = 0
+        
+        # Clear previous results first
+        _skp_wh_clear_previews()
+        _skp_wh_results = []
+        _skp_wh_result_map = {}
+        _skp_wh_enum_items = []
+        
+        # Don't clear selection yet - wait until after enum items are rebuilt
+        
+        # Use search API with collection filter - try multiple parameter formats with comprehensive parameters
+        base_params = ('&sortBy=popularity%20desc&personalizeSearch=true&personalizeSearchAlgorithm=heuristic'
+                      '&contentType=3dw&showBinaryAttributes=true&showBinaryMetadata=true&showAttributes=true'
+                      '&show=all&recordEvent=false&fq=binaryNames%3Dexists%3Dtrue')
+        
+        api_urls = [
+            # Prefer parentIds filter which returns collection members (example proven)
+            f"https://3dwarehouse.sketchup.com/warehouse/v1.0/entities?fq=parentIds=={collection_id}&contentType=3dw&show=all&showBinaryMetadata=true&showAttributes=true",
+            # Working approaches based on testing - prioritize these
+            f"https://embed-3dwarehouse.sketchup.com/warehouse/v1.0/entities?collectionId={collection_id}&contentType=3dw&showBinaryAttributes=true&showBinaryMetadata=true&showAttributes=true&show=all&recordEvent=false",
+            f"https://embed-3dwarehouse.sketchup.com/warehouse/v1.0/collections/{collection_id}/entities?contentType=3dw&showBinaryAttributes=true&showBinaryMetadata=true&showAttributes=true&show=all",
+            f"https://3dwarehouse.sketchup.com/warehouse/v1.0/collections/{collection_id}/entities?contentType=3dw&show=all",
+            # Fallback approaches (these don't work but keeping for completeness)
+            f"https://embed-3dwarehouse.sketchup.com/warehouse/v1.0/entities?fq=collectionId=={collection_id}{base_params}",
+            f"https://embed-3dwarehouse.sketchup.com/warehouse/v1.0/entities?fq=collectionId%3D%3D{collection_id}{base_params}",
+            f"https://embed-3dwarehouse.sketchup.com/warehouse/v1.0/entities?collectionId={collection_id}&contentType=3dw&showBinaryAttributes=true&showBinaryMetadata=true&showAttributes=true&show=all",
+            # Try without some parameters that might be causing issues
+            f"https://embed-3dwarehouse.sketchup.com/warehouse/v1.0/entities?fq=collectionId:{collection_id}&contentType=3dw&showBinaryAttributes=true&showBinaryMetadata=true&showAttributes=true&show=all",
+            # Try the old format that might still work
+            f"https://3dwarehouse.sketchup.com/warehouse/v1.0/entities?collectionId={collection_id}&contentType=3dw&show=all",
+            # Try direct collection API endpoints
+            f"https://embed-3dwarehouse.sketchup.com/warehouse/v1.0/collections/{collection_id}/entities?contentType=3dw&showBinaryAttributes=true&showBinaryMetadata=true&showAttributes=true&show=all",
+            f"https://3dwarehouse.sketchup.com/warehouse/v1.0/collections/{collection_id}/entities?contentType=3dw&show=all"
+        ]
+        
+        prefs = _skp_wh_get_prefs()
+        cookie = prefs.warehouse_cookie.strip() if prefs and getattr(prefs, 'warehouse_cookie', '') else ''
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Referer': 'https://3dwarehouse.sketchup.com/',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-site'
+        }
+        if cookie:
+            headers['Cookie'] = cookie
+        
+        data = None
+        for i, api_url in enumerate(api_urls):
+            skp_log(f"Trying collection API URL {i+1}/{len(api_urls)}: {api_url}")
+            try:
+                req = urllib.request.Request(api_url, headers=headers)
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    raw = resp.read().decode('utf-8', errors='replace')
+                    skp_log(f"Collection API response status: {resp.status}, content length: {len(raw)}")
+                    if len(raw.strip()) == 0:
+                        skp_log("Empty response received")
+                        continue
+                    data = json.loads(raw)
+                    skp_log(f"Successfully parsed JSON data with {len(data) if isinstance(data, (list, dict)) else 'unknown'} top-level items")
+                    break  # Success, use this data
+            except urllib.error.HTTPError as he:
+                skp_log(f"HTTP Error for collection {collection_id} (URL {i+1}): {he.code} - {he.reason}")
+                if he.code == 400:
+                    try:
+                        error_details = he.read().decode('utf-8', errors='replace')
+                        skp_log(f"Bad Request details: {error_details}")
+                    except:
+                        skp_log("Could not read error response body")
+                elif he.code == 404:
+                    skp_log("Collection not found (404)")
+                elif he.code == 403:
+                    skp_log("Access forbidden (403) - collection may be private")
+                continue
+            except json.JSONDecodeError as je:
+                skp_log(f"JSON decode error for collection {collection_id}: {je}")
+                continue
+            except Exception as e:
+                skp_log(f"Error loading collection {collection_id} (URL {i+1}): {type(e).__name__}: {e}")
+                continue
+        
+        if data is None:
+            # Try to verify if collection exists by checking the web page
+            skp_log(f"Attempting to verify collection {collection_id} exists...")
+            try:
+                collection_url = f"https://3dwarehouse.sketchup.com/collection/{collection_id}"
+                req = urllib.request.Request(collection_url, headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                })
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    if resp.status == 200:
+                        page_content = resp.read().decode('utf-8', errors='replace')
+                        if 'collection' in page_content.lower() or 'model' in page_content.lower():
+                            skp_log(f"Collection page exists but API failed - collection may be empty or API changed")
+                        else:
+                            skp_log(f"Collection page exists but appears to be empty or inaccessible")
+                    else:
+                        skp_log(f"Collection page returned status {resp.status} - collection may not exist")
+            except Exception as e:
+                skp_log(f"Could not verify collection existence: {e}")
+            
+            raise RuntimeError(f'Failed to load collection {collection_id} - all {len(api_urls)} API attempts failed')
+        
+        entries = self._parse_entities(data)
+        if not entries:
+            raise RuntimeError('No models found in collection')
+        
+        _skp_wh_clear_previews()
+        pcoll = _skp_wh_ensure_previews()
+        temp_dir = tempfile.mkdtemp(prefix='skp_wh_thumbs_')
+        
+        for ent in entries[:96]:  # Limit to 96 for performance
+            mid = ent.get('id')
+            name = ent.get('title') or ent.get('name') or 'Model'
+            slug = self._slugify(name)
+            model_url = f"https://3dwarehouse.sketchup.com/model/{mid}/{slug}" if mid else ''
+            binaries = ent.get('binaries') if isinstance(ent.get('binaries'), dict) else {}
+            # Collect skp versions
+            skp_versions = []
+            for bname in (ent.get('binaryNames') or []):
+                if isinstance(bname, str) and re.fullmatch(r's\d+', bname):
+                    try:
+                        skp_versions.append(int(bname[1:]))
+                    except ValueError:
+                        pass
+            skp_versions.sort(reverse=True)
+            # Determine restricted
+            restricted = False
+            if skp_versions:
+                restricted_flags = []
+                for v in skp_versions:
+                    key = f's{v}'
+                    binfo = binaries.get(key)
+                    if isinstance(binfo, dict):
+                        c_url = binfo.get('contentUrl') or ''
+                        restricted_flags.append('/restricted/' in c_url)
+                if restricted_flags and all(restricted_flags):
+                    restricted = True
+            # Polygon count
+            poly_count = None
+            try:
+                poly_count = ent.get('attributes', {}).get('skp', {}).get('polygons', {}).get('value')
+            except Exception:
+                poly_count = None
+            # File size
+            file_size = None
+            skp_filename = ''
+            if skp_versions:
+                for v in skp_versions:
+                    key = f's{v}'
+                    binfo = binaries.get(key)
+                    if isinstance(binfo, dict):
+                        file_size = binfo.get('fileSize')
+                        skp_filename = binfo.get('originalFileName', '')
+                        if file_size:
+                            break
+            def _fmt_size(num):
+                if not num:
+                    return '—'
+                for unit in ('B','KB','MB','GB'):
+                    if num < 1024 or unit == 'GB':
+                        return f"{num:.1f}{unit}" if unit != 'B' else f"{num}B"
+                    num /= 1024.0
+            thumb_url, original_name = self._pick_thumbnail_binary(binaries)
+            icon_id = 0
+            if thumb_url:
+                try:
+                    ext = os.path.splitext(thumb_url.split('?',1)[0])[1]
+                    if ext.lower() not in ('.jpg', '.jpeg', '.png', '.webp'):
+                        ext = '.jpg'
+                    thumb_path = os.path.join(temp_dir, f"{mid}{ext}")
+                    with urllib.request.urlopen(urllib.request.Request(thumb_url, headers={'User-Agent': 'Mozilla/5.0'}), timeout=20) as ir, open(thumb_path, 'wb') as outf:
+                        shutil.copyfileobj(ir, outf)
+                    rel_name = os.path.basename(thumb_path)
+                    pcoll.load(rel_name, thumb_path, 'IMAGE')
+                    icon_id = pcoll[rel_name].icon_id
+                except Exception:
+                    icon_id = 0
+            _skp_wh_results.append({
+                'model_id': mid,
+                'model_name': slug,
+                'display_name': name,
+                'model_url': model_url,
+                'icon_id': icon_id,
+                'skp_versions': skp_versions,
+                'restricted': restricted,
+                'has_glb': 'glb' in binaries,
+                'poly_count': poly_count,
+                'file_size': file_size,
+                'file_size_fmt': _fmt_size(file_size),
+                'skp_filename': skp_filename or ent.get('title') or ''
+            })
+            if mid:
+                _skp_wh_result_map[mid] = _skp_wh_results[-1]
+        
+        # Rebuild enum items
+        _skp_wh_enum_items = []
+        for r in _skp_wh_results:
+            if r['model_id']:
+                name_disp = (r['display_name'][:32] + ('…' if len(r['display_name'])>32 else ''))
+                _skp_wh_enum_items.append((r['model_id'], name_disp, r['model_url'], r['icon_id'], len(_skp_wh_enum_items)))
+        
+        # After rebuilding enum items, select the first item (if any)
+        # so the enum has a valid value and the UI can display thumbnails.
+        wm = context.window_manager
+        if _skp_wh_enum_items:
+            first_id = _skp_wh_enum_items[0][0]
+            try:
+                wm.skp_wh_selected = first_id
+            except Exception:
+                # Fallback to empty string if assignment fails for any reason
+                wm.skp_wh_selected = ''
+        else:
+            wm.skp_wh_selected = ''
+
+        # Force RNA property update and redraw the 3D View so the gallery updates
+        try:
+            context.window_manager.property_update('skp_wh_selected')
+        except Exception:
+            pass
+        for area in context.screen.areas:
+            if area.type == 'VIEW_3D':
+                try:
+                    area.tag_redraw()
+                except Exception:
+                    pass
+                break
+
+        # Update totals for UI display
+        _skp_wh_total_results = len(_skp_wh_results)
+        _skp_wh_total_pages = 1  # Collections are loaded as single page
+
+        # Debug: log first few entries for verification
+        if LOGS or DEBUG:
+            try:
+                sample = [_skp_wh_results[i]['model_id'] + ':' + _skp_wh_results[i]['display_name'] for i in range(min(6, len(_skp_wh_results)))]
+            except Exception:
+                sample = []
+            skp_log(f"Collection rebuild: total={len(_skp_wh_results)}, sample={sample}")
+
+    def _parse_entities(self, data):
+        if isinstance(data, dict):
+            for k in ('entries', 'entities', 'items', 'results'):
+                v = data.get(k)
+                if isinstance(v, list) and v:
+                    return v
+        if isinstance(data, list):
+            return data
+        return []
+
+    def _slugify(self, name: str):
+        slug = re.sub(r'[^a-zA-Z0-9\- _]+', '', (name or 'Model')).strip().replace(' ', '-')
+        return slug[:60] if slug else 'Model'
+
+    def _pick_thumbnail_binary(self, binaries: dict):
+        primary_order = ['bot_lt_wp', 'bot_lt', 'bot_st_wp', 'bot_st', 'bot_tt_wp', 'bot_tt']
+        ao_order = ['bot_lt_wp_ao', 'bot_lt_ao', 'bot_st_wp_ao', 'bot_st_ao', 'bot_tt_wp_ao', 'bot_tt_ao']
+        for key in primary_order + ao_order:
+            entry = binaries.get(key)
+            if isinstance(entry, dict):
+                url = entry.get('url') or entry.get('contentUrl')
+                if url:
+                    return url, entry.get('originalFileName', '')
+        for k, entry in binaries.items():
+            if isinstance(entry, dict):
+                ext = (entry.get('ext') or '').lower()
+                if ext in ('jpg', 'jpeg', 'png', 'webp'):
+                    url = entry.get('url') or entry.get('contentUrl')
+                    if url:
+                        return url, entry.get('originalFileName', '')
+        return '', ''
+
+
 class VIEW3D_PT_SketchupWarehouseBrowser(bpy.types.Panel):
     bl_label = '3D Warehouse'
     bl_space_type = 'VIEW_3D'
@@ -1695,6 +2049,10 @@ class VIEW3D_PT_SketchupWarehouseBrowser(bpy.types.Panel):
         global _skp_wh_total_pages, _skp_wh_total_results
         layout = self.layout
         wm = context.window_manager
+        # URL input and load button
+        url_row = layout.row(align=True)
+        url_row.prop(wm, 'skp_wh_url', text='')
+        url_row.operator('skp_wh.load_url', text='', icon='URL')
         row = layout.row()
         row.prop(wm, 'skp_wh_query', text='')
         # Sort selector
@@ -1726,6 +2084,17 @@ class VIEW3D_PT_SketchupWarehouseBrowser(bpy.types.Panel):
             return
         if wm.skp_wh_thumb_mode == 'GALLERY':
             layout.template_icon_view(wm, 'skp_wh_selected', show_labels=True)
+            # Debug: check that enum items and results map align
+            if DEBUG:
+                try:
+                    skp_log(f"DEBUG: enum_items={len(_skp_wh_enum_items)}, results={len(_skp_wh_results)}")
+                    # show first few enum item ids
+                    ei_sample = [e[0] for e in _skp_wh_enum_items[:6]]
+                    rr_sample = [r['model_id'] for r in _skp_wh_results[:6]]
+                    skp_log(f"DEBUG: enum_sample={ei_sample}")
+                    skp_log(f"DEBUG: results_sample={rr_sample}")
+                except Exception:
+                    pass
             # Details of selection
             sel = wm.skp_wh_selected
             if sel and sel in _skp_wh_result_map:
@@ -1783,6 +2152,7 @@ classes_to_register_extra = [
     SKPWH_OT_Search,
     SKPWH_OT_ImportResult,
     SKPWH_OT_ImportSelected,
+    SKPWH_OT_LoadURL,
     VIEW3D_PT_SketchupWarehouseBrowser,
 ]
 
