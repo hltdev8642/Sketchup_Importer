@@ -1452,10 +1452,9 @@ class SKPWH_OT_Search(Operator):
         }
         sort_expr = sort_map.get(sort_key, 'popularity desc')
         sort_param = sort_expr.replace(' ', '%20')
+    # Note: personalizeSearch must be false when using explicit sortBy values
         base = ('https://embed-3dwarehouse.sketchup.com/warehouse/v1.0/entities'
-                f'?sortBy={sort_param}&personalizeSearch=true&personalizeSearchAlgorithm=heuristic'
-                '&contentType=3dw&showBinaryAttributes=true&showBinaryMetadata=true&showAttributes=true'
-                '&show=all&recordEvent=false&fq=binaryNames%3Dexists%3Dtrue')
+        f'?sortBy={sort_param}&personalizeSearch=false&contentType=3dw&showBinaryAttributes=true&showBinaryMetadata=true&showAttributes=true&show=all&recordEvent=false&fq=binaryNames%3Dexists%3Dtrue')
         return f"{base}&q={quote(query)}&offset={offset}"
 
     def _parse_entities(self, data):
@@ -1606,6 +1605,7 @@ class SKPWH_OT_Search(Operator):
             thumb_url, original_name = self._pick_thumbnail_binary(binaries)
             icon_id = 0
             if thumb_url:
+                # skp_log(f"Loading thumbnail for {mid}: {thumb_url}")
                 try:
                     # enforce extension
                     ext = os.path.splitext(thumb_url.split('?',1)[0])[1]
@@ -1618,7 +1618,9 @@ class SKPWH_OT_Search(Operator):
                         shutil.copyfileobj(ir, outf)
                     pcoll.load(preview_key, thumb_path, 'IMAGE')
                     icon_id = pcoll[preview_key].icon_id
-                except Exception:
+                    # skp_log(f"Loaded thumbnail for {mid}: {preview_key}, icon_id={icon_id}")
+                except Exception as e:
+                    # skp_log(f"Failed to load thumbnail for {mid}: {e}")
                     icon_id = 0
             _skp_wh_results.append({
                 'model_id': mid,
@@ -1637,6 +1639,7 @@ class SKPWH_OT_Search(Operator):
             # Build enum item (identifier must be unique); use model_id
             if mid:
                 _skp_wh_result_map[mid] = _skp_wh_results[-1]
+        # skp_log(f"Preview collection has {len(pcoll)} items: {list(pcoll.keys())[:5]}")
         self.report({'INFO'}, f"Found {len(_skp_wh_results)} models (page {wm.skp_wh_page + 1}{' / ' + str(_skp_wh_total_pages) if _skp_wh_total_pages else ''}) | Sort: {current_sort}")
         # Rebuild enum items after results
         global _skp_wh_enum_items
@@ -1645,14 +1648,30 @@ class SKPWH_OT_Search(Operator):
             if r['model_id']:
                 name_disp = (r['display_name'][:32] + ('…' if len(r['display_name'])>32 else ''))
                 _skp_wh_enum_items.append((r['model_id'], name_disp, r['model_url'], r['icon_id'], len(_skp_wh_enum_items)))
+        # skp_log(f"Enum items: {len(_skp_wh_enum_items)}, sample: {[e[0] for e in _skp_wh_enum_items[:5]]}")
         # Ensure a valid selection exists after search so the UI shows thumbnails for the first result
         try:
             wm = context.window_manager
             if _skp_wh_enum_items:
                 first_id = _skp_wh_enum_items[0][0]
                 wm.skp_wh_selected = first_id
+                # skp_log(f"Selected: {wm.skp_wh_selected}")
         except Exception:
             pass
+        
+        # Force RNA property update and redraw the 3D View so the gallery updates
+        try:
+            context.window_manager.property_update('skp_wh_selected')
+        except Exception:
+            pass
+        for area in context.screen.areas:
+            if area.type == 'VIEW_3D':
+                try:
+                    area.tag_redraw()
+                except Exception:
+                    pass
+                break
+        
         return {'FINISHED'}
 
 
@@ -1775,9 +1794,10 @@ class SKPWH_OT_LoadURL(Operator):
         # Don't clear selection yet - wait until after enum items are rebuilt
         
         # Use search API with collection filter - try multiple parameter formats with comprehensive parameters
-        base_params = ('&sortBy=popularity%20desc&personalizeSearch=true&personalizeSearchAlgorithm=heuristic'
-                      '&contentType=3dw&showBinaryAttributes=true&showBinaryMetadata=true&showAttributes=true'
-                      '&show=all&recordEvent=false&fq=binaryNames%3Dexists%3Dtrue')
+        # Ensure personalizeSearch is false when using explicit sortBy values (avoids API rejecting the request)
+        base_params = ('&sortBy=popularity%20desc&personalizeSearch=false'
+              '&contentType=3dw&showBinaryAttributes=true&showBinaryMetadata=true&showAttributes=true'
+              '&show=all&recordEvent=false&fq=binaryNames%3Dexists%3Dtrue')
         
         api_urls = [
             # Prefer parentIds filter which returns collection members (example proven)
@@ -1936,12 +1956,13 @@ class SKPWH_OT_LoadURL(Operator):
                     ext = os.path.splitext(thumb_url.split('?',1)[0])[1]
                     if ext.lower() not in ('.jpg', '.jpeg', '.png', '.webp'):
                         ext = '.jpg'
-                    thumb_path = os.path.join(temp_dir, f"{mid}{ext}")
+                    # Use deterministic preview key that includes the model id to avoid collisions
+                    preview_key = f"skp_wh_{mid}{ext}"
+                    thumb_path = os.path.join(temp_dir, preview_key)
                     with urllib.request.urlopen(urllib.request.Request(thumb_url, headers={'User-Agent': 'Mozilla/5.0'}), timeout=20) as ir, open(thumb_path, 'wb') as outf:
                         shutil.copyfileobj(ir, outf)
-                    rel_name = os.path.basename(thumb_path)
-                    pcoll.load(rel_name, thumb_path, 'IMAGE')
-                    icon_id = pcoll[rel_name].icon_id
+                    pcoll.load(preview_key, thumb_path, 'IMAGE')
+                    icon_id = pcoll[preview_key].icon_id
                 except Exception:
                     icon_id = 0
             _skp_wh_results.append({
